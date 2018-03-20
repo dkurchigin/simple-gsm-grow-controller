@@ -1,8 +1,17 @@
+#include <SimpleDHT.h>
 #include <SoftwareSerial.h>
+
 SoftwareSerial mySerial(2, 3); // RX, TX
 int ch = 0;
 int led = 13;
 String val = "";
+String temperaturePattern = "Temperature = ";
+String humidityPattern = "Humidity = ";
+String temperatureInfo = "";
+String humidityInfo = "";
+
+int pinDHT = 10;
+SimpleDHT22 dht22;
 
 void setup() {
   delay(2000);  //время на инициализацию модуля
@@ -46,7 +55,8 @@ void loop() {
     }
     //mySerial.println(val);  //передача всех команд, набранных в мониторе порта в GSM модуль
     if (val.indexOf("sendsms") > -1) {  //если увидели команду отправки СМС
-      sms(String("hello world"), String("+79536169000"));  //отправляем СМС на номер +71234567890
+      getTemperature();
+      sms(String("message"), String("+79536169000"));  //отправляем СМС на номер +71234567890
     }
     val = "";  //очищаем
   }
@@ -57,10 +67,32 @@ void sms(String text, String phone)  //процедура отправки СМ�
   Serial.println("SMS send started");
   mySerial.println("AT+CMGS=\"" + phone + "\"");
   delay(500);
-  mySerial.print(text);
+  mySerial.println(temperatureInfo+"C");
+  //mySerial.println("C");
+  delay(500);
+  mySerial.print(humidityInfo);
+  mySerial.println("%");
   delay(500);
   mySerial.print((char)26);
   delay(500);
   Serial.println("SMS send complete");
   delay(2000);
 }
+
+void getTemperature() {
+  byte temperature = 0;
+  byte humidity = 0;
+  int err = SimpleDHTErrSuccess;
+  if ((err = dht22.read(pinDHT, &temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
+    Serial.print("Read DHT22 failed, err="); Serial.println(err);delay(1000);
+    return;
+  }
+  
+  Serial.print("Sample OK: ");
+  Serial.print((int)temperature); Serial.print(" *C, "); 
+  Serial.print((int)humidity); Serial.println(" H");
+
+  temperatureInfo = temperaturePattern+temperature;
+  humidityInfo = humidityPattern+humidity;
+}
+
