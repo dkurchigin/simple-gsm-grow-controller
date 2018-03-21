@@ -1,5 +1,7 @@
 #include <SimpleDHT.h>
 #include <SoftwareSerial.h>
+#include <Wire.h>
+#include <RTClib.h>
 
 SoftwareSerial mySerial(2, 3); // RX, TX
 int ch = 0;
@@ -12,6 +14,7 @@ String humidityInfo = "";
 
 int pinDHT = 10;
 SimpleDHT22 dht22;
+DS1307 RTC;
 
 void setup() {
   delay(2000);  //время на инициализацию модуля
@@ -26,6 +29,14 @@ void setup() {
   delay(100);
   mySerial.println("AT+CSCS=\"GSM\"");  //режим кодировки текста
   delay(100);
+  
+  Wire.begin();
+  RTC.begin();
+  if (! RTC.isrunning())
+  {
+    Serial.println(F("RTC is not running!"));
+    RTC.adjust(DateTime(__DATE__, __TIME__));
+  }
 }
 
 void loop() {
@@ -94,5 +105,10 @@ void getTemperature() {
 
   temperatureInfo = temperaturePattern+temperature;
   humidityInfo = humidityPattern+humidity;
+
+  DateTime datetime = RTC.now();
+  Serial.print(datetime.year());
+  Serial.print(":");
+  Serial.println(datetime.day());
 }
 
