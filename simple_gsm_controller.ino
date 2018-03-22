@@ -32,16 +32,17 @@ void setup() {
   //mySerial.println("AT+CPMS=\"MT\"");
   //delay(100);
   //mySerial.println("read sms's");
-  mySerial.println("AT+CMGR=1");
-  delay(100);
+  //mySerial.println("AT+CMGR=1");
+  //delay(100);
   
   Wire.begin();
   RTC.begin();
   if (! RTC.isrunning())
   {
     Serial.println(F("RTC is not running!"));
-    RTC.adjust(DateTime(__DATE__, __TIME__));
+    //RTC.adjust(DateTime(__DATE__, __TIME__));
   }
+  //RTC.adjust(DateTime(2018, 3, 22, 18, 0, 0));
 }
 
 void loop() {
@@ -72,7 +73,7 @@ void loop() {
     //mySerial.println(val);  //передача всех команд, набранных в мониторе порта в GSM модуль
     if (val.indexOf("sendsms") > -1) {  //если увидели команду отправки СМС
       getTemperature();
-      sms(String("message"), String("+79536169000"));  //отправляем СМС на номер +71234567890
+      sms(String(getDateTime()), String("+79536169000"));  //отправляем СМС на номер +71234567890
     }
     val = "";  //очищаем
   }
@@ -80,16 +81,17 @@ void loop() {
 
 void sms(String text, String phone)  //процедура отправки СМС
 {
-  Serial.println("SMS send started");
-  mySerial.println("AT+CMGS=\"" + phone + "\"");
+  Serial.println("SMS send started"); //везде, кроме как здесь было mySerial
+  Serial.println("AT+CMGS=\"" + phone + "\"");
   delay(500);
-  mySerial.println(temperatureInfo+"C");
-  //mySerial.println("C");
+  Serial.println(temperatureInfo+"C");
   delay(500);
-  mySerial.print(humidityInfo);
-  mySerial.println("%");
+  Serial.print(humidityInfo);
+  Serial.println("%");
   delay(500);
-  mySerial.print((char)26);
+  Serial.println(getDateTime());
+  delay(500);
+  Serial.print((char)26);
   delay(500);
   Serial.println("SMS send complete");
   delay(2000);
@@ -111,9 +113,26 @@ void getTemperature() {
   temperatureInfo = temperaturePattern+temperature;
   humidityInfo = humidityPattern+humidity;
 
+  //DateTime datetime = RTC.now();
+  //Serial.print(datetime.year());
+  //Serial.print(":");
+  //Serial.println(datetime.day());
+}
+
+String getDateTime() {
   DateTime datetime = RTC.now();
-  Serial.print(datetime.year());
-  Serial.print(":");
-  Serial.println(datetime.day());
+  String message = "Current date and time ";
+  message = message + datetime.year();
+  message = message + ".";
+  message = message + datetime.month();
+  message = message + ".";
+  message = message + datetime.day();
+  message = message + " ";
+  message = message + datetime.hour();
+  message = message + ":";
+  message = message + datetime.minute();
+  message = message + ":";
+  message = message + datetime.second();
+  return message;
 }
 
