@@ -25,9 +25,14 @@ void setup() {
   mySerial.begin(9600);
   mySerial.println("AT+CLIP=1");  //включаем АОН
   delay(100);
-  mySerial.println("AT+CMGF=1");  //режим кодировки СМС - обычный (для англ.)
+  mySerial.println("AT+CMGF=1");  //БЫЛО 1 режим кодировки СМС - обычный (для англ.)
   delay(100);
-  mySerial.println("AT+CSCS=\"GSM\"");  //режим кодировки текста
+  mySerial.println("AT+CSCS=\"GSM\"");  // GSM режим кодировки текста
+  delay(100);
+  //mySerial.println("AT+CPMS=\"MT\"");
+  //delay(100);
+  //mySerial.println("read sms's");
+  mySerial.println("AT+CMGR=1");
   delay(100);
   
   Wire.begin();
