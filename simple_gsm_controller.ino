@@ -29,6 +29,8 @@ void setup() {
   delay(100);
   mySerial.println("AT+CSCS=\"GSM\"");  // GSM режим кодировки текста
   delay(100);
+  mySerial.println("AT+CNMI=2,2,0,0,0");
+  delay(100);
   //mySerial.println("AT+CPMS=\"MT\"");
   //delay(100);
   //mySerial.println("read sms's");
@@ -52,18 +54,23 @@ void loop() {
       val += char(ch);
       delay(10);
     }
-    if (val.indexOf("RING") > -1) {  //если звонок обнаружен, то проверяем номер
-      if (val.indexOf("79536169000") > -1) {  //если номер звонящего наш. Укажите свой номер без "+"
-        Serial.println("--- MASTER RING DETECTED ---");
-        mySerial.println("ATH0");  //разрываем связь
-        digitalWrite(led, HIGH);  //включаем светодиод на 3 сек
-        delay(3000);
-        digitalWrite(led, LOW);  //выключаем реле
-      }
-    } else
+    if(val.indexOf("+CMT") > -1) //если есть входящее sms
+     { 
+      if(val.indexOf("get datetime") > -1) // смотрим, что за команда
+       {  
+         delay(100);
+         sms(String(getDateTime()), String("+79536169000"));
+       } else if(val.indexOf("set datetime") > -1) //попробовать парсить 
+         {  
+           delay(100);
+           sms(String(getDateTime()), String("+79536169000"));
+         }       
+     }
+     else
       Serial.println(val);  //печатаем в монитор порта пришедшую строку
     val = "";
-  }
+  } 
+  
   if (Serial.available()) {  //если в мониторе порта ввели что-то
     while (Serial.available()) {  //сохраняем строку в переменную val
       ch = Serial.read();
@@ -72,7 +79,6 @@ void loop() {
     }
     //mySerial.println(val);  //передача всех команд, набранных в мониторе порта в GSM модуль
     if (val.indexOf("sendsms") > -1) {  //если увидели команду отправки СМС
-      getTemperature();
       sms(String(getDateTime()), String("+79536169000"));  //отправляем СМС на номер +71234567890
     }
     val = "";  //очищаем
@@ -82,16 +88,11 @@ void loop() {
 void sms(String text, String phone)  //процедура отправки СМС
 {
   Serial.println("SMS send started"); //везде, кроме как здесь было mySerial
-  Serial.println("AT+CMGS=\"" + phone + "\"");
+  mySerial.println("AT+CMGS=\"" + phone + "\"");
   delay(500);
-  Serial.println(temperatureInfo+"C");
+  mySerial.println(text);
   delay(500);
-  Serial.print(humidityInfo);
-  Serial.println("%");
-  delay(500);
-  Serial.println(getDateTime());
-  delay(500);
-  Serial.print((char)26);
+  mySerial.print((char)26);
   delay(500);
   Serial.println("SMS send complete");
   delay(2000);
@@ -112,11 +113,6 @@ void getTemperature() {
 
   temperatureInfo = temperaturePattern+temperature;
   humidityInfo = humidityPattern+humidity;
-
-  //DateTime datetime = RTC.now();
-  //Serial.print(datetime.year());
-  //Serial.print(":");
-  //Serial.println(datetime.day());
 }
 
 String getDateTime() {
