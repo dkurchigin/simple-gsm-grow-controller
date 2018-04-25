@@ -6,7 +6,11 @@
 SoftwareSerial mySerial(2, 3); // RX, TX
 int ch = 0;
 int led = 13;
+
 String val = "";
+String testval = "set-date=22/03/2018";
+String settingDate = "";
+
 String temperaturePattern = "Temperature = ";
 String humidityPattern = "Humidity = ";
 String temperatureInfo = "";
@@ -29,8 +33,8 @@ void setup() {
   delay(100);
   mySerial.println("AT+CSCS=\"GSM\"");  // GSM режим кодировки текста
   delay(100);
-  mySerial.println("AT+CNMI=2,2,0,0,0");
-  delay(100);
+  //mySerial.println("AT+CNMI=2,2,0,0,0");
+  //delay(100);
   //mySerial.println("AT+CPMS=\"MT\"");
   //delay(100);
   //mySerial.println("read sms's");
@@ -54,20 +58,20 @@ void loop() {
       val += char(ch);
       delay(10);
     }
-    if(val.indexOf("+CMT") > -1) //если есть входящее sms
-     { 
-      if(val.indexOf("get datetime") > -1) // смотрим, что за команда
-       {  
+    if(val.indexOf("+CMT") > -1) { //если есть входящее sms  
+      if(val.indexOf("get datetime") > -1) {// смотрим, что за команда  
          delay(100);
-         sms(String(getDateTime()), String("+79536169000"));
-       } else if(val.indexOf("set datetime") > -1) //попробовать парсить 
-         {  
-           delay(100);
-           sms(String(getDateTime()), String("+79536169000"));
-         }       
-     }
-     else
+         sms(String(getDateTime()), String("+79536169000"));  
+       } else if(val.indexOf("set ") == 0) {//попробовать парсить   
+         if(val.indexOf(" -date=") == 0) {
+           int datePos = val.indexOf(" -date=");
+           settingDate = testval.substring(datePos + 5, datePos + 15);
+           Serial.println(settingDate); 
+         } 
+       }       
+    } else {
       Serial.println(val);  //печатаем в монитор порта пришедшую строку
+    }
     val = "";
   } 
   
@@ -81,9 +85,21 @@ void loop() {
     if (val.indexOf("sendsms") > -1) {  //если увидели команду отправки СМС
       sms(String(getDateTime()), String("+79536169000"));  //отправляем СМС на номер +71234567890
     }
+    if (val.indexOf("parse") > -1) {  //пробую парсить строку
+      if (testval.indexOf("set ") == 0) {
+        settingDate = testval.substring(10, 20);
+        Serial.println(settingDate);
+      } else {
+        Serial.print("Unknown command: \"");
+        Serial.print(testval);
+        Serial.println("\"");
+      }
+    }
     val = "";  //очищаем
   }
 }
+
+
 
 void sms(String text, String phone)  //процедура отправки СМС
 {
@@ -130,5 +146,10 @@ String getDateTime() {
   message = message + ":";
   message = message + datetime.second();
   return message;
+}
+
+
+String setDate() {
+  //
 }
 
